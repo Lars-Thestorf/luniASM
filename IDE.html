@@ -28,6 +28,35 @@
 				for(let i = 0; i < xres * yres * 4; i++)
 					imageData.data[i] = (i & 3) == 3 ? 255 : interpreter.mem.gfx[i];
 			}
+			
+			function keyboardChanged(key, state) {
+				switch (key) {
+					case 'ArrowUp':
+						buttonChanged(0xF100, state);
+						break;
+					case 'ArrowDown':
+						buttonChanged(0xF104, state);
+						break;
+					case 'ArrowLeft':
+						buttonChanged(0xF108, state);
+						break;
+					case 'ArrowRight':
+						buttonChanged(0xF10C, state);
+						break;
+					case 'Control':
+						buttonChanged(0xF110, state);
+						break;
+					case 'Shift':
+						buttonChanged(0xF114, state);
+						break;
+				}
+			}
+			function buttonChanged(buttonRegister, pressed)
+			{
+				if(!interpreter) return;
+				console.log("0x"+buttonRegister.toString(16) + "=" + pressed);
+				interpreter.mem.store(buttonRegister, pressed);
+			}
 
 			function init()
 			{
@@ -49,6 +78,9 @@
 				ctx = canvas.getContext("2d")
 				imageData = ctx.getImageData(0, 0, xres, yres);
 				requestAnimationFrame(loop);
+				
+				window.addEventListener('keydown', (e) => keyboardChanged(e.key, 1));
+				window.addEventListener('keyup', (e) => keyboardChanged(e.key, 0));
 			}
 
 			function run()
@@ -166,7 +198,7 @@
 			canvas
 			{
 				image-rendering: pixelated;
-				zoom: 16.0;
+				height: 300px;
 				border-style: solid;
 				border-color: #ff1493;
 				border-width: 0.1px;
