@@ -122,6 +122,11 @@ class Compiler
 			if(labelInstances[label])
 				for(let j = 0; j < labelInstances[label].length; j++)
 					this.writeInt(code, labelInstances[label][j][0], labels[label], labelInstances[label][j][1]);
+		for(const label in labelInstances) {
+			if (!labels[label]) {
+				console.error("unlinked label: "+label);
+			}
+		}
 		return new Uint8Array(code);
 	}
 
