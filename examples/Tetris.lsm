@@ -1,0 +1,988 @@
+//HEAP:
+//0x00 currentBlock
+//0x04 currentX
+//0x08 currentY
+//0x0C currentRot
+//0x10 nextBlock
+//0x14 dropDelay
+//0x18 dasdelay
+//0x1C lines
+//0x20 score
+//0x24 level
+//0x28 random lfsr seed
+//0x2C game state (0 = level select, 1=ingame, 2=ingame_line_animation, 3=game_over_animation, 4=game over screen)
+//
+//0x30 a was pressed previous frame
+//0x34 b was pressed previous frame
+//
+//0x40 block-lookup [0][0]    first index is tetromino number
+//0x44 block-lookup [0][1]    second index is rotation
+//0x48 block-lookup [0][2]     .-----------------.
+//0x4C block-lookup [0][3]     | lsb  1   2   3  |
+//0x50 block-lookup [1][0]     |  4   5   6   7  |
+//0x54 block-lookup [1][1]     |  8   9  10  11  |
+//0x58 block-lookup [1][2]     | 12  13  14  msb |
+//0x5C block-lookup [1][3]     `-----------------´
+//..........
+//0x90 block-lookup [5][0]
+//0x94 block-lookup [5][1]
+//0x98 block-lookup [5][2]
+//0x9C block-lookup [5][3]
+//0xA0 block-lookup [6][0]
+//0xA4 block-lookup [6][1]
+//0xA8 block-lookup [6][2]
+//0xAC block-lookup [6][3]
+//
+//0xB0 color-lookup [0]
+//0xB4 color-lookup [1]
+//0xB8 color-lookup [2]
+//0xBC color-lookup [3]
+//0xC0 color-lookup [4]
+//0xC4 color-lookup [5]
+//0xC8 color-lookup [6]
+//0xCC color-lookup [7]
+//
+//0xD0 speed-lookup [0]
+//0xD1 speed-lookup [1]
+//0xD2 speed-lookup [2]
+//0xD3 speed-lookup [3]
+//0xD4 speed-lookup [4]
+//0xD5 speed-lookup [5]
+//0xD6 speed-lookup [6]
+//0xD7 speed-lookup [7]
+//0xD8 speed-lookup [8]
+//0xD9 speed-lookup [9]
+//0xDA speed-lookup [10]
+//0xDB speed-lookup [11]
+//0xDC speed-lookup [12]
+//0xDD speed-lookup [13]
+//0xDE speed-lookup [14]
+//0xDF speed-lookup [15]
+//0xE0 speed-lookup [16]
+//0xE1 speed-lookup [17]
+//0xE2 speed-lookup [18]
+//0xE3 speed-lookup [19]
+//
+//
+//0x100 Field (10x18)
+//0x100 - 0x109 1st (top) row
+//0x10A - 0x113 2nd row
+//0x114 - 0x11D 3rd row
+//0x11E - ..... 4rd row (first visible one)
+//..... - 0x1A9 17nd row
+//0x1AA - 0x1B3 18nd (bottom) row
+//
+
+push  0xE40   // T upright
+push  0x40
+stor
+push  0x4C40  // T right
+push  0x44
+stor
+push  0x4E00  // T upside down
+push  0x48
+stor
+push  0x4640  // T left
+push  0x4C
+stor
+push  0x660   // O upright
+push  0x50
+stor
+push  0x660   // O right
+push  0x54
+stor
+push  0x660   // O upside down
+push  0x58
+stor
+push  0x660   // O left
+push  0x5C
+stor
+push  0xC60   // S upright
+push  0x60
+stor
+push  0x4C80  // S right
+push  0x64
+stor
+push  0xC600  // S upside down
+push  0x68
+stor
+push  0x2640  // S left
+push  0x6C
+stor
+push  0x6C0   // Z upright
+push  0x70
+stor
+push  0x8C40  // Z right
+push  0x74
+stor
+push  0x6C00  // Z upside down
+push  0x78
+stor
+push  0x4620  // Z left
+push  0x7C
+stor
+push  0xE80   // L upright
+push  0x80
+stor
+push  0xC440  // L right
+push  0x84
+stor
+push  0x2E00  // L upside down
+push  0x88
+stor
+push  0x4460  // L left
+push  0x8C
+stor
+push  0xE20   // J upright
+push  0x90
+stor
+push  0x44C0  // J right
+push  0x94
+stor
+push  0x8E00  // J upside down
+push  0x98
+stor
+push  0x6440  // J left
+push  0x9C
+stor
+push  0xF00   // I upright
+push  0xA0
+stor
+push  0x4444  // I right
+push  0xA4
+stor
+push  0xF00   // I upside down
+push  0xA8
+stor
+push  0x4444  // I left
+push  0xAC
+stor
+
+push  0          // empty color (black)
+push  0xB0
+stor
+push  0xFFFF00FF // T color (pink)
+push  0xB4
+stor
+push  0xFF00FFFF // O color (yellow)
+push  0xB8
+stor
+push  0xFF00FF00 // S color (green)
+push  0xBC
+stor
+push  0xFF0000FF // Z color (red)
+push  0xC0
+stor
+push  0xFFFF0000 // L color (blue)
+push  0xC4
+stor
+push  0xFF0080FF // J color (orange)
+push  0xC8
+stor
+push  0xFFFFFF00 // I color (cyan)
+push  0xCC
+stor
+
+push  0
+push  0x00 // current block
+stor
+push  1
+push  0x04 // current x
+stor
+push  2
+push  0x08 // current y
+stor
+push  1
+push  0x0C // current rotation
+stor
+push  1
+push  0x10 // next block
+stor
+push  50
+push  0x14 // drop delay
+stor
+
+push  0
+push  0x2C // game state
+stor
+
+push  45
+push  0x28 // lfsr seed
+stor
+
+//white line on the right
+push 0xFFFFFFFF
+push 0xA028
+stor
+push 0xFFFFFFFF
+push 0xA068
+stor
+push 0xFFFFFFFF
+push 0xA0A8
+stor
+push 0xFFFFFFFF
+push 0xA0E8
+stor
+push 0xFFFFFFFF
+push 0xA128
+stor
+push 0xFFFFFFFF
+push 0xA168
+stor
+push 0xFFFFFFFF
+push 0xA1A8
+stor
+push 0xFFFFFFFF
+push 0xA1E8
+stor
+push 0xFFFFFFFF
+push 0xA228
+stor
+push 0xFFFFFFFF
+push 0xA268
+stor
+push 0xFFFFFFFF
+push 0xA2A8
+stor
+push 0xFFFFFFFF
+push 0xA2E8
+stor
+push 0xFFFFFFFF
+push 0xA328
+stor
+push 0xFFFFFFFF
+push 0xA368
+stor
+push 0xFFFFFFFF
+push 0xA3A8
+stor
+
+mainloop:
+
+    push 0x2C      //game state
+    load
+    push gameover
+    jnz
+    
+//player input
+    push 0xF110    //a
+    load
+    push player_input_noa
+    jz
+    push 0x30
+    load
+    push player_input_noa
+    jnz
+    push 0x0C
+    load
+    inc
+    push 3
+    and
+    push 0x0C
+    stor
+    push player_input_checka
+    push does_falling_fit
+    jmp
+player_input_checka:
+    push player_input_noa
+    jnz
+    push 0x0C
+    load
+    dec
+    push 3
+    and
+    push 0x0C
+    stor
+player_input_noa:
+    push 0xF110    //a
+    load
+    push 0x30
+    stor
+    push 0xF114    //b
+    load
+    push player_input_nob
+    jz
+    push 0x34
+    load
+    push player_input_nob
+    jnz
+    push 0x0C
+    load
+    dec
+    push 3
+    and
+    push 0x0C
+    stor
+push player_input_checkb
+    push does_falling_fit
+    jmp
+player_input_checkb:
+    push player_input_nob
+    jnz
+    push 0x0C
+    load
+    inc
+    push 3
+    and
+    push 0x0C
+    stor
+player_input_nob:
+    push 0xF114    //b
+    load
+    push 0x34
+    stor   
+    push 0xF108    //left
+    load
+    push player_input_noleft
+    jz
+    push 0x04
+    load
+    dec
+    push 0x04
+    stor
+    push player_input_checkleft
+    push does_falling_fit
+    jmp
+player_input_checkleft:
+    push player_input_noleft
+    jnz
+    push 0x04
+    load
+    inc
+    push 0x04
+    stor
+player_input_noleft:
+    push 0xF10C    //right
+    load
+    push player_input_noright
+    jz
+    push 0x04
+    load
+    inc
+    push 0x04
+    stor
+    push player_input_checkright
+    push does_falling_fit
+    jmp
+player_input_checkright:
+    push player_input_noright
+    jnz
+    push 0x04
+    load
+    dec
+    push 0x04
+    stor
+player_input_noright:
+
+
+//gravity
+    push 0x14
+    load            //stack: drop delay
+    dec
+    clone           //stack: drop delay, drop delay
+    push 0x14
+    stor            //stack: drop delay
+    push 0xF104
+    load            //stack: drop delay, down button
+    push gravity_normal
+    jz              //stack: drop delay
+    push 15
+    push gravity_okay
+    jge
+    push 0
+gravity_normal:
+    push gravity_okay
+    jnz
+    
+    push 20
+    push 0x14 //drop delay
+    stor
+    push 0x08
+    load            //stack: current Y
+    inc
+    push 0x08
+    stor
+    
+    push gravity_check 
+    push does_falling_fit
+    jmp
+gravity_check:
+    push gravity_okay
+    jnz
+    push 0x08
+    load            //stack: current Y
+    dec
+    push 0x08
+    stor
+    
+    //solidify current piece
+    push  16
+
+solidify_loop: //stack: loopcnt
+    dec
+    clone            //stack: loopcnt, loopcnt
+    push 1           //stack: loopcnt, loopcnt, 1
+    swap             //stack: loopcnt, 1, loopcnt
+    shl              //stack: loopcnt, mask
+    push 0x40        //stack: loopcnt, mask, 0x40
+    push 0x00
+    load             //stack: loopcnt, mask, 0x40, current block
+    push 4
+    shl              //stack: loopcnt, mask, 0x40, current block << 4
+    add              //stack: loopcnt, mask, 0x40 + current block << 4
+    push 0x0C
+    load             //stack: loopcnt, mask, 0x40 + current block << 4, current rotation
+    push 2
+    shl
+    add              //stack: loopcnt, mask, block lookup hw address
+    load             //stack: loopcnt, mask, block
+    and              //stack: loopcnt, masked_block
+    push solidify_noblock
+    jz               //stack: loopcnt
+    
+    push solidify_noblock
+    push 0x00
+    load
+    inc              //stack: loopcnt, return, block_material
+    
+    push 2
+    loads            //stack: loopcnt, return, block_material, loopcnt
+    clone            //stack: loopcnt, return, block_material, loopcnt, loopcnt
+    
+    push 3
+    and              //stack: loopcnt, return, block_material, loopcnt, loopcnt_x
+    push 0x04
+    load
+    push 2
+    sub
+    add              //stack: loopcnt, return, block_material, loopcnt, loopcnt_x + x
+    swap             //stack: loopcnt, return, block_material, loopcnt_x + x, loopcnt
+    push 2
+    shr              //stack: loopcnt, return, block_material, loopcnt_x + x, loopcnt_y
+    push 0x08
+    load             //stack: loopcnt, return, block_material, loopcnt_x + x, loopcnt_y, current y
+    add
+    push 3
+    sub              //stack: loopcnt, return, block_material, loopcnt_x + x, loopcnt_y + y
+    push field_set_block
+    jmp
+solidify_noblock:
+    clone            //stack: loopcnt, loopcnt
+    push solidify_loop
+    jnz
+    pop
+    
+    //current piece = next piece
+    push 0x10
+    load            //stack: next piece
+    push 0x00
+    stor
+    
+    push solidify_line_full_check
+    push any_line_full
+    jmp
+solidify_line_full_check:
+    push solidify_line_full_false
+    jz
+    push 0xFFFF00FF
+    push 0xA36C
+    stor
+solidify_line_full_false:
+    
+    //current piece to top of field
+    push 5
+    push 0x04  //current x
+    stor
+    push 2
+    push 0x08  //current y
+    stor
+    push 0
+    push 0x0C  //current rotation
+    stor
+    push 20
+    push 0x14  //drop delay
+    stor
+    push game_over_check
+    push does_falling_fit
+    jmp
+game_over_check:
+    push not_game_over
+    jnz
+    push 3
+    push 0x2C
+    stor
+not_game_over:
+    
+    //random next piece
+mainloop_next:
+    push mainloop_random_return_1
+    push random
+    jmp                             //stack: random1
+mainloop_random_return_1:
+    push mainloop_random_return_2
+    push random
+    jmp                             //stack: random1, random2
+mainloop_random_return_2:
+    push 1
+    shl
+    add                             //stack: random1 + random2 << 1
+    push mainloop_random_return_3
+    push random
+    jmp                             //stack: random1 + random2 << 1, random3
+mainloop_random_return_3:
+    push 2
+    shl
+    add                             //stack: random1 + random2 << 1 + random3 << 2
+    clone
+    dec
+    push 0x10
+    stor
+    push mainloop_next
+    jz
+    
+gravity_okay:
+
+render_field:
+    push 3 //y
+render_field_y_loop:
+    push 0 //x
+render_field_x_loop:
+    push 0x11E        //stack: y, x, field mem addr
+    push 1
+    loads             //stack: y, x, field mem addr, x
+    add               //stack: y, x, field mem addr + x,
+    push 2
+    loads             //stack: y, x, field mem addr + x, y
+    push 3
+    sub
+    push 10
+    mul               //stack: y, x, field mem addr + x, y * 10
+    add               //stack: y, x, field mem addr + x + y * 10
+    load              //stack: y, x, color index and garbage
+    push 0xFF
+    and               //stack: y, x, color index
+    push 2
+    shl
+    push 0xB0
+    add
+    load              //stack: y, x, color
+    push render_field_return
+    push 2
+    loads             //stack: y, x, color, return, x
+    push 4
+    loads             //stack: y, x, color, return, x, y
+    push field_get_gfx_addr
+    jmp               //stack: y, x, color, gfx addr
+render_field_return:
+    stor              //stack: y, x,
+    inc
+    clone             //stack: y, x, x
+    push 10
+    swap              //stack: y, x, 10, x
+    push render_field_x_loop
+    jg                //stack: y, x
+    pop               //stack: y
+    
+    inc
+    clone             //stack: y, y
+    push 18
+    swap              //stack: y, 18, y
+    push render_field_y_loop
+    jg                //stack: y
+    pop
+    
+
+render_falling:
+    push  16
+
+render_falling_loop: //stack: loopcnt
+    dec
+    clone            //stack: loopcnt, loopcnt
+    push 1           //stack: loopcnt, loopcnt, 1
+    swap             //stack: loopcnt, 1, loopcnt
+    shl              //stack: loopcnt, mask
+    push 0x40        //stack: loopcnt, mask, 0x40
+    push 0x00
+    load             //stack: loopcnt, mask, 0x40, current block
+    push 4
+    shl              //stack: loopcnt, mask, 0x40, current block << 4
+    add              //stack: loopcnt, mask, 0x40 + current block << 4
+    push 0x0C
+    load             //stack: loopcnt, mask, 0x40 + current block << 4, current rotation
+    push 2
+    shl
+    add              //stack: loopcnt, mask, block lookup hw address
+    load             //stack: loopcnt, mask, block
+    and              //stack: loopcnt, masked_block
+    push render_falling_nodraw
+    jz               //stack: loopcnt
+    
+    clone            //stack: loopcnt, loopcnt
+    clone            //stack: loopcnt, loopcnt, loopcnt
+    
+    push 3
+    and              //stack: loopcnt, loopcnt, loopcnt & 3
+    push 0x04
+    load
+    push 2
+    sub
+    add
+    swap             //stack: loopcnt, loopcnt & 3, loopcnt
+    push 2
+    shr              //stack: loopcnt, loopcnt & 3, loopcnt >> 2
+    push 0x08
+    load             //stack: loopcnt, loopcnt & 3, loopcnt >> 2, current y
+    add
+    push 6
+    sub
+    push 4
+    shl              //stack: loopcnt, loopcnt & 3, loopcnt << 2
+    add              //stack: loopcnt, pixel index
+    push 2
+    shl
+    push 0xA000      //stack: loopcnt, pixel index << 2, 0xA000
+    add              //stack: loopcnt, pixel hw address
+    
+    push 0xB4 //color table
+    push 0x00 //current block
+    load
+    push 2
+    shl
+    add
+    load             //stack: loopcnt, pixel hw address, color
+    swap             //stack: loopcnt, color, pixel hw address
+    stor             //stack: loopcnt
+render_falling_nodraw:
+    clone            //stack: loopcnt, loopcnt
+    push render_falling_loop
+    jnz
+    pop
+
+render_next:
+    push  16
+
+render_next_loop:    //stack: loopcnt
+    dec
+    
+    clone            //stack: loopcnt, loopcnt
+    clone            //stack: loopcnt, loopcnt, loopcnt
+    
+    push 3
+    and              //stack: loopcnt, loopcnt, loopcnt & 3
+    push 11 //x position
+    add
+    swap             //stack: loopcnt, loopcnt & 3, loopcnt
+    push 2
+    shr              //stack: loopcnt, loopcnt & 3, loopcnt >> 2
+    push 4
+    shl              //stack: loopcnt, loopcnt & 3, loopcnt << 2
+    add              //stack: loopcnt, pixel index
+    push 2
+    shl
+    push 0xA000      //stack: loopcnt, pixel index << 2, 0xA000
+    add              //stack: loopcnt, pixel hw address
+    
+    push 0xB4 //color table
+    push 0x10 //next block
+    load
+    push 2
+    shl
+    add
+    load             //stack: loopcnt, pixel hw address, color
+    
+    push 2
+    loads            //stack: loopcnt, pixel hw address, color, loopcnt
+    push 1           //stack: loopcnt, pixel hw address, color, loopcnt, 1
+    swap             //stack: loopcnt, pixel hw address, color, 1, loopcnt
+    shl              //stack: loopcnt, pixel hw address, color, mask
+    push 0x40        //stack: loopcnt, pixel hw address, color, mask, 0x40
+    push 0x10
+    load             //stack: loopcnt, pixel hw address, color, mask, 0x40, next block
+    push 4
+    shl              //stack: loopcnt, pixel hw address, color, mask, 0x40, next block << 4
+    add              //stack: loopcnt, pixel hw address, color, mask, block lookup hw address
+
+    load             //stack: loopcnt, pixel hw address, color, mask, block
+    and              //stack: loopcnt, pixel hw address, color, masked_block
+    push 3
+    loads            //stack: loopcnt, pixel hw address, color, masked_block, loopcnt
+    shr
+    mul              //stack: loopcnt, pixel hw address, pixel color
+    
+    swap             //stack: loopcnt, pixel color, pixel hw address
+    stor             //stack: loopcnt
+    
+    clone            //stack: loopcnt, loopcnt
+    push render_next_loop
+    jnz
+    pop
+
+delay:
+    push 0
+delay_loop:
+    inc              //stack: delay_cnt
+    clone            //stack: delay_cnt, delay_cnt
+    push 2000
+    push delay_loop
+    jne
+    pop
+    push mainloop
+    jmp
+
+
+//returns gfx hardware address of pixel
+//in stack: return_label, x, y
+//out stack: hardware address
+field_get_gfx_addr:
+    push 3
+    sub
+    push 4
+    shl              //stack: return_label, x, y * 16
+    add              //stack: return_label, x + y * 16
+    push 2
+    shl
+    push 0xA000
+    add              //stack: return_label, gfx hw address
+    swap
+    jmp
+
+//in stack: return_label, x, y
+//out stack: block
+field_get_block:
+    clone              //stack: return_label, x, y, y
+    push 0             //stack: return_label, x, y, y, 0
+    swap               //stack: return_label, x, y, 0, y
+    push field_get_block_y_outside
+    jg
+    clone              //stack: return_label, x, y, y
+    push 17            //stack: return_label, x, y, y, 17
+    push field_get_block_y_outside
+    jg                 //stack: return_label, x, y
+    swap               //stack: return_label, y, x
+    clone              //stack: return_label, y, x, x
+    push 0             //stack: return_label, y, x, x, 0
+    swap               //stack: return_label, y, x, 0, x
+    push field_get_block_x_outside
+    jg                 //stack: return_label, y, x
+    clone              //stack: return_label, y, x, x
+    push 9             //stack: return_label, y, x, x, 9
+    push field_get_block_x_outside
+    jg                 //stack: return_label, y, x
+    swap               //stack: return_label, x, y
+    
+    push 10
+    mul                //stack: return_label, x, y * 10
+    add                //stack: return_label, x + y * 10
+    push 0x100
+    add                //stack: return_label, field addr
+    load               //stack: return_label, field val
+    push 0xFF
+    and                //stack: return_label, block
+    swap
+    jmp
+field_get_block_x_outside:
+    //stack: return_label, y, x
+    pop
+    pop                //stack: return_label
+    push 0xFF          //return 0xFF
+    swap
+    jmp
+field_get_block_y_outside:
+    //stack: return_label, x, y
+    pop
+    pop                //stack: return_label
+    push 0xFF          //return 0xFF
+    swap
+    jmp
+
+//in stack: return_label, block, x, y
+//out stack: 
+field_set_block:
+    push 10
+    mul                //stack: return_label, block, x, y * 10
+    add                //stack: return_label, block, x + y * 10
+    push 0x100
+    add                //stack: return_label, block, field addr
+    clone              //stack: return_label, block, field addr, field addr
+    load               //stack: return_label, block, field addr, field val
+    push 0xFFFFFF00
+    and                //stack: return_label, block, field addr, field val & 0xFFFFFF00
+    push 2
+    loads              //stack: return_label, block, field addr, field val & 0xFFFFFF00, block
+    add                //stack: return_label, block, field addr, new field val
+    swap
+    stor               //stack: return_label, block
+    pop                //stack: return_label
+    jmp
+
+//in stack: return_label
+//out stack: pseudo random number 0 or 1
+random:
+    push 0x28
+    load
+    clone
+    clone         //stack: return_label, seed, seed, seed
+    push 11
+    shr           //stack: return_label, seed, seed, seed >> 11
+    swap          //stack: return_label, seed, seed >> 11, seed
+    push 9
+    shr           //stack: return_label, seed, seed >> 11, seed >> 9
+    xor           //stack: return_label, seed, next...
+    push 1
+    and           //stack: return_label, seed, next
+    swap          //stack: return_label, next, seed
+    push 1
+    shl           //stack: return_label, next, seed << 1
+    push 1
+    loads         //stack: return_label, next, seed << 1, next
+    or            //stack: return_label, next, next seed
+    push 0x28
+    stor          //stack: return_label, next
+    swap
+    jmp
+    
+//in stack: return_label
+//out stack: 0 or 1
+does_falling_fit:
+    push  16
+
+does_falling_fit_loop: //stack: return_label, loopcnt
+    dec
+    clone            //stack: return_label, loopcnt, loopcnt
+    push 1           //stack: return_label, loopcnt, loopcnt, 1
+    swap             //stack: return_label, loopcnt, 1, loopcnt
+    shl              //stack: return_label, loopcnt, mask
+    push 0x40        //stack: return_label, loopcnt, mask, 0x40
+    push 0x00
+    load             //stack: return_label, loopcnt, mask, 0x40, current block
+    push 4
+    shl
+    add              //stack: return_label, loopcnt, mask, 0x40 + current block << 4
+    push 0x0C
+    load             //stack: return_label, loopcnt, mask, 0x40 + current block << 4, current rotation
+    push 2
+    shl
+    add              //stack: return_label, loopcnt, mask, block lookup hw address
+    load             //stack: return_label, loopcnt, mask, block
+    and              //stack: return_label, loopcnt, masked_block
+    push does_falling_fit_skip
+    jz               //stack: return_label, loopcnt
+
+    clone            //stack: return_label, loopcnt, loopcnt
+    push does_falling_fit_return
+    swap             //stack: return_label, loopcnt, return, loopcnt
+    clone            //stack: return_label, loopcnt, return, loopcnt, loopcnt
+    
+    push 3
+    and              //stack: return_label, loopcnt, return, loopcnt, loopcnt & 3
+    push 0x04
+    load
+    add
+    push 2
+    sub              //stack: return_label, loopcnt, return, loopcnt, x
+    swap             //stack: return_label, loopcnt, return, x, loopcnt
+    push 2
+    shr              //stack: return_label, loopcnt, return, x, loopcnt >> 2
+    push 0x08
+    load
+    add
+    push 3
+    sub              //stack: return_label, loopcnt, return, x, y
+
+    push field_get_block
+    jmp              //stack: return_label, loopcnt, field block
+does_falling_fit_return:
+    push does_falling_fit_skip
+    jz               //stack: return_label, loopcnt
+    pop              //stack: return_label
+    push 0           //return false
+    swap
+    jmp
+
+does_falling_fit_skip:
+    clone            //stack: return_label, loopcnt, loopcnt
+    push does_falling_fit_loop
+    jnz
+    pop
+    push 1           //return true
+    swap
+    jmp
+
+gameover:
+    push 0xFF0000FF
+    push 0xA3AC
+    stor
+    push mainloop
+    jmp
+
+//in stack: return_label, line (0-17)
+//out stack: 0 or 1
+is_line_full:
+    push 10        //stack: return_label, y, x
+is_line_full_loop:
+    dec            //stack: return_label, y, x
+    push is_line_full_check
+    push 1
+    loads          //stack: return_label, y, x, return, x
+    push 3
+    loads          //stack: return_label, y, x, return, x, y
+    push field_get_block
+    jmp            //stack: return_label, y, x, block
+is_line_full_check:
+    push is_line_full_false
+    jz             //stack: return_label, y, x
+    clone          //stack: return_label, y, x, x
+    push is_line_full_loop
+    jnz            //stack: return_label, y, x
+    pop            //stack: return_label, y
+    pop            //stack: return_label
+    push 1   //return true
+    swap
+    jmp
+is_line_full_false:
+    pop            //stack: return_label, y
+    pop            //stack: return_label
+    push 0   //return false
+    swap
+    jmp
+    
+//in stack: return_label
+//out stack: 0 or 1
+any_line_full:
+    push 18        //stack: return_label, y
+any_line_full_loop:
+    dec            //stack: return_label, y
+    push any_line_full_check
+    push 1
+    loads          //stack: return_label, y, return, y
+    push is_line_full
+    jmp            //stack: return_label, y, 0 or 1
+any_line_full_check:
+    push any_line_full_true
+    jnz            //stack: return_label, y
+    clone          //stack: return_label, y, y
+    push any_line_full_loop
+    jnz            //stack: return_label, y
+    pop
+    push 0    //return false
+    swap
+    jmp
+any_line_full_true:
+    pop
+    push 1    //return true
+    swap
+    jmp
+    
+//clearscreen:
+//    push 0xA000      //stack: 0xA000
+//
+//clearscreen_loop:
+//    clone            //stack: 0xA000, 0xA000
+//    push 0           //stack: 0xA000, 0xA000, 0
+//    swap             //stack: 0xA000, 0, 0xA000
+//    stor             //stack: 0xA000
+//    inc
+//    clone            //stack: 0xA000, 0xA000
+//    push 0xA3C0      //stack: 0xA000, 0xA000, 0xA3C0
+//    push clearscreen_loop
+//    jne
