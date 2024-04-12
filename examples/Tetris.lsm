@@ -183,6 +183,26 @@ push  0xFFFFFF00 // I color (cyan)
 push  0xCC
 stor
 
+//speed table (ticks between gravity getting applied):
+//53,49,45,41,37,33,28,22,17,11,10,9,8,7,6,6,5,5,4,4
+//hex:
+//35,31,2D,29,25,21,1C,16,11,0B,0A,09,08,07,06,06,05,05,04,04
+push 0x292D3135
+push 0xD0
+stor
+push 0x161C2125
+push 0xD4
+stor
+push 0x090A0B11
+push 0xD8
+stor
+push 0x06060708
+push 0xDC
+stor
+push 0x04040505
+push 0xE0
+stor
+
 push  0
 push  0x00 // current block
 stor
@@ -200,6 +220,9 @@ push  0x10 // next block
 stor
 push  50
 push  0x14 // drop delay
+stor
+push  9
+push  0x24 // level
 stor
 
 push  0
@@ -386,7 +409,12 @@ player_input_noright:
     load            //stack: drop delay, down button
     push gravity_normal
     jz              //stack: drop delay
-    push 15
+    push gravity_down_check
+    push get_current_speed
+    jmp
+gravity_down_check:
+    push 3
+    sub
     push gravity_okay
     jge
     push 0
@@ -394,7 +422,10 @@ gravity_normal:
     push gravity_okay
     jnz
     
-    push 20
+    push gravity_speed_load
+    push get_current_speed
+    jmp
+gravity_speed_load:
     push 0x14 //drop delay
     stor
     push 0x08
@@ -487,6 +518,9 @@ solidify_line_full_check:
     push 0xFFFF00FF
     push 0xA36C
     stor
+    push solidify_line_full_false
+    push clear_full_lines
+    jmp
 solidify_line_full_false:
     
     //current piece to top of field
@@ -722,7 +756,7 @@ delay:
 delay_loop:
     inc              //stack: delay_cnt
     clone            //stack: delay_cnt, delay_cnt
-    push 2000
+    push 1000
     push delay_loop
     jne
     pop
@@ -970,6 +1004,109 @@ any_line_full_check:
 any_line_full_true:
     pop
     push 1    //return true
+    swap
+    jmp
+
+//in stack: return_label, line num
+//out stack:
+clear_line:
+clear_line_y_loop:
+    clone                     //stack: return_label, line num, line num
+    push clear_line_break
+    jz
+    dec                       //stack: return_label, line num
+    push 10                   //stack: return_label, line num, x
+clear_line_x_loop:
+    dec                       //stack: return_label, line num, x
+    
+    push clear_line_get_return//stack: return_label, line num, x, return
+    push 1
+    loads                     //stack: return_label, line num, x, return, x
+    push 3
+    loads                     //stack: return_label, line num, x, return, x, line num (y)
+    push field_get_block
+    jmp                       //stack: return_label, line num, x, block
+clear_line_get_return:
+    push clear_line_set_return//stack: return_label, line num, x, block, return
+    swap                      //stack: return_label, line num, x, return, block
+    push 2
+    loads                     //stack: return_label, line num, x, return, block, x
+    push 4
+    loads                     //stack: return_label, line num, x, return, block, x, line num (y)
+    push field_set_block
+    jmp                       //stack: return_label, line num, x
+clear_line_set_return:
+    clone                     //stack: return_label, line num, x, x
+    push clear_line_x_loop
+    jnz                       //stack: return_label, line num, x
+    pop                       //stack: return_label, line num
+    push clear_line_y_loop
+    jmp                       //stack: return_label, line num
+clear_line_break:
+    pop                       //stack: return_label
+    //clear line 0
+    push 10
+clear_line_line_zero_loop:
+    dec                       //stack: return_label, x
+    push clear_line_zero_return//stack return_label, x, return
+    push 0                    //stack: return_label, x, return, block
+    push 2
+    loads                     //stack: return_label, x, return, block, x
+    push 0                    //stack: return_label, x, return, block, x, y
+    push field_set_block
+    jmp                       //stack: return_label, x
+clear_line_line_zero_return:
+    clone                     //stack: return_label, x, x
+    push clear_line_zero_loop
+    jnz
+    pop
+    jmp
+
+//in stack: return_label
+//out stack:
+clear_full_lines:
+    push 18                    //stack: return_label, line
+clear_full_lines_loop:
+    dec                        //stack: return_label, line
+    clone                      //stack: return_label, line, line
+    push clear_full_lines_check
+    swap
+    push is_line_full
+    jmp                        //stack: return_label, line, 0 or 1
+clear_full_lines_check:
+    push clear_full_lines_skip
+    jz                         //stack: return_label, line
+    clone                      //stack: return_label, line, line
+    push clear_full_lines_skip //stack: return_label, line, line, return
+    swap                       //stack: return_label, line, return, line
+    push clear_line
+    jmp                        //stack: return_label, line
+clear_full_lines_skip:
+    clone                      //stack: return_label, line, line
+    push clear_full_lines_loop
+    jnz                        //stack: return_label, line
+    pop                        //stack: return_label
+    jmp
+
+//in stack: return_label
+//out stack: drop delay of current level
+get_current_speed:
+    push 0x24
+    load
+    clone
+    push 20
+    push get_current_speed_max
+    jge
+    push 0xD0
+    add
+    load
+    push 0xFF
+    and
+    swap
+    jmp
+get_current_speed_max:
+    pop
+    push 3
     swap
     jmp
     
