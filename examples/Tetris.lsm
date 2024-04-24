@@ -5,7 +5,7 @@
 //0x0C currentRot
 //0x10 nextBlock
 //0x14 dropDelay
-//0x18 dasdelay
+//0x18 dasCounter
 //0x1C lines
 //0x20 score
 //0x24 level
@@ -14,6 +14,8 @@
 //
 //0x30 a was pressed previous frame
 //0x34 b was pressed previous frame
+//0x38 left was pressed previous frame
+//0x3C right was pressed previous frame
 //
 //0x40 block-lookup [0][0]    first index is tetromino number
 //0x44 block-lookup [0][1]    second index is rotation
@@ -369,6 +371,9 @@ player_input_nob:
 player_input_checkleft:
     push player_input_noleft
     jnz
+    push 1
+    push 0x38
+    stor
     push 0x04
     load
     inc
@@ -1033,6 +1038,7 @@ clear_line_get_return:
     loads                     //stack: return_label, line num, x, return, block, x
     push 4
     loads                     //stack: return_label, line num, x, return, block, x, line num (y)
+    inc
     push field_set_block
     jmp                       //stack: return_label, line num, x
 clear_line_set_return:
@@ -1046,7 +1052,7 @@ clear_line_break:
     pop                       //stack: return_label
     //clear line 0
     push 10
-clear_line_line_zero_loop:
+clear_line_zero_loop:
     dec                       //stack: return_label, x
     push clear_line_zero_return//stack return_label, x, return
     push 0                    //stack: return_label, x, return, block
@@ -1055,7 +1061,7 @@ clear_line_line_zero_loop:
     push 0                    //stack: return_label, x, return, block, x, y
     push field_set_block
     jmp                       //stack: return_label, x
-clear_line_line_zero_return:
+clear_line_zero_return:
     clone                     //stack: return_label, x, x
     push clear_line_zero_loop
     jnz
@@ -1077,6 +1083,8 @@ clear_full_lines_check:
     push clear_full_lines_skip
     jz                         //stack: return_label, line
     clone                      //stack: return_label, line, line
+    inc   //inc line counter so we check the same line again next loop since lineclear moves lines down
+    swap
     push clear_full_lines_skip //stack: return_label, line, line, return
     swap                       //stack: return_label, line, return, line
     push clear_line
