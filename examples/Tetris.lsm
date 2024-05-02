@@ -360,6 +360,33 @@ player_input_nob:
     load
     push player_input_noleft
     jz
+    push 0x38
+    load                   //stack: left-previous
+    push player_input_left_press
+    jz
+
+    //still holding left
+    push 0x18
+    load                   //stack: dasCounter
+    inc
+    clone                  //stack: dasCounter, dasCounter
+    push 0x18
+    stor                   //stack: dasCounter
+    push 16
+    swap
+    push player_input_noleft
+    jg
+    push 10
+    push 0x18
+    stor
+    push player_input_left_move
+    jmp
+player_input_left_press:
+    push 0
+    push 0x18      //dasCounter
+    stor
+player_input_left_move:
+    //move piece
     push 0x04
     load
     dec
@@ -371,19 +398,47 @@ player_input_nob:
 player_input_checkleft:
     push player_input_noleft
     jnz
-    push 1
-    push 0x38
-    stor
     push 0x04
     load
     inc
     push 0x04
     stor
 player_input_noleft:
+    push 0xF108    //left
+    load
+    push 0x38
+    stor
     push 0xF10C    //right
     load
     push player_input_noright
     jz
+    push 0x3C
+    load                   //stack: right-previous
+    push player_input_right_press
+    jz
+
+    //still holding right
+    push 0x18
+    load                   //stack: dasCounter
+    inc
+    clone                  //stack: dasCounter, dasCounter
+    push 0x18
+    stor                   //stack: dasCounter
+    push 16
+    swap
+    push player_input_noright
+    jg
+    push 10
+    push 0x18
+    stor
+    push player_input_right_move
+    jmp
+player_input_right_press:
+    push 0
+    push 0x18      //dasCounter
+    stor
+player_input_right_move:
+    //move piece
     push 0x04
     load
     inc
@@ -401,6 +456,10 @@ player_input_checkright:
     push 0x04
     stor
 player_input_noright:
+    push 0xF10C    //right
+    load
+    push 0x3C
+    stor
 
 
 //gravity
